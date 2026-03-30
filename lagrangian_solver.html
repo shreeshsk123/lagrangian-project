@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Lagrangian Solver Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #030a0f;
+    --panel: #071420;
+    --border: #0d3a52;
+    --accent: #00ffe7;
+    --accent2: #ff6b35;
+    --accent3: #7fff00;
+    --text: #b0d8e8;
+    --muted: #3a6070;
+    --error: #ff4060;
+    --glow: 0 0 18px #00ffe744;
+    --glow2: 0 0 18px #ff6b3544;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,231,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,231,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.4rem, 4vw, 2.6rem);
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-shadow: 0 0 30px #00ffe788, 0 0 60px #00ffe733;
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { text-shadow: 0 0 30px #00ffe788, 0 0 60px #00ffe733; }
+    50%      { text-shadow: 0 0 50px #00ffe7cc, 0 0 100px #00ffe766; }
+  }
+
+  .sub {
+    font-size: 0.75rem;
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    margin-top: 0.4rem;
+    text-transform: uppercase;
+  }
+
+  /* ── PANELS ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  /* ── INPUTS ── */
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.7rem;
+  }
+
+  label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    min-width: 90px;
+  }
+
+  input[type="number"], input[type="text"] {
+    background: #020d14;
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 3px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+  }
+
+  input[type="number"] { width: 70px; flex-shrink: 0; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 3px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-cyan {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+  .btn-cyan:hover { background: var(--accent); color: var(--bg); box-shadow: var(--glow); }
+
+  .btn-orange {
+    background: transparent;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+  }
+  .btn-orange:hover { background: var(--accent2); color: #fff; box-shadow: var(--glow2); }
+
+  .btn-solve {
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.8rem;
+    padding: 0.9rem 3rem;
+    font-weight: 700;
+    box-shadow: var(--glow);
+    transition: all 0.3s;
+  }
+  .btn-solve:hover { background: #fff; box-shadow: 0 0 40px #00ffe7aa; transform: translateY(-1px); }
+  .btn-solve:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .solve-row {
+    display: flex;
+    justify-content: center;
+    margin: 1.5rem 0;
+  }
+
+  /* ── CONSTRAINTS DYNAMIC ── */
+  #constraints-list .c-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  #constraints-list .c-label {
+    font-size: 0.7rem;
+    color: var(--accent2);
+    min-width: 32px;
+  }
+
+  /* ── STATUS ── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.5rem 1rem;
+    background: #020d14;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 1.2rem;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+  .dot.active { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); animation: blink 1s infinite; }
+  .dot.error  { background: var(--error); box-shadow: 0 0 8px var(--error); }
+  .dot.done   { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── OUTPUT ── */
+  #output {
+    background: #020d14;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.2rem;
+    font-size: 0.78rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 180px;
+    max-height: 340px;
+    overflow-y: auto;
+    color: #00ffe7cc;
+    margin-bottom: 1.2rem;
+  }
+
+  #output .section { color: var(--accent2); font-weight: 700; }
+  #output .key     { color: var(--accent); }
+  #output .val     { color: var(--accent3); }
+  #output .err     { color: var(--error); }
+
+  /* ── PLOT ── */
+  #plot-container {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+    min-height: 420px;
+    display: none;
+  }
+
+  #plot { width: 100%; height: 380px; }
+
+  /* ── SPINNER ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--muted);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #020d14; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">∇ LAGRANGIAN SOLVER</div>
+    <div class="sub">constrained optimization engine &nbsp;·&nbsp; powered by claude ai</div>
+  </header>
+
+  <!-- Config row -->
+  <div class="grid">
+    <!-- Variables -->
+    <div class="panel">
+      <div class="panel-title">01 · Variables</div>
+      <div class="row">
+        <label>Count (n)</label>
+        <input type="number" id="var-count" min="1" max="6" value="2" style="width:70px">
+        <button class="btn btn-cyan" onclick="createVariables()">Init</button>
+      </div>
+      <div id="var-display" style="font-size:0.72rem;color:var(--muted);">— not initialised —</div>
+    </div>
+
+    <!-- Constraints -->
+    <div class="panel">
+      <div class="panel-title">02 · Constraints</div>
+      <div class="row">
+        <label>Count (m)</label>
+        <input type="number" id="con-count" min="1" max="5" value="1" style="width:70px">
+        <button class="btn btn-cyan" onclick="createConstraints()">Add</button>
+      </div>
+      <div id="constraints-list"></div>
+    </div>
+  </div>
+
+  <!-- Objective function -->
+  <div class="panel" style="margin-bottom:1.2rem;">
+    <div class="panel-title">03 · Objective Function  f(x₁, x₂, …)</div>
+    <div class="row">
+      <label>f =</label>
+      <input type="text" id="obj-fn" placeholder="e.g.  x1*x2  or  x1**2 + x2**2  or  x1*x2*x3" />
+    </div>
+    <div style="font-size:0.67rem;color:var(--muted);margin-top:0.4rem;">
+      Use Python/SymPy notation · x1, x2, x3… · ** for powers · * for multiply
+    </div>
+  </div>
+
+  <!-- Solve -->
+  <div class="solve-row">
+    <button class="btn btn-solve" id="solve-btn" onclick="solveProblem()">⚡ SOLVE</button>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar">
+    <div class="dot" id="status-dot"></div>
+    <span id="status-text">Awaiting input…</span>
+  </div>
+
+  <!-- Output -->
+  <div id="output">// Solution will appear here…</div>
+
+  <!-- Plot -->
+  <div id="plot-container">
+    <div class="panel-title" style="margin-bottom:0.5rem;">04 · 3D Visualisation  (drag to rotate)</div>
+    <div id="plot"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────
+let numVars = 2;
+let constraintInputs = [];
+
+// ─── Init Variables ──────────────────────────────────────
+function createVariables() {
+  numVars = parseInt(document.getElementById('var-count').value) || 2;
+  const symbols = Array.from({length: numVars}, (_, i) => `x${i+1}`);
+  document.getElementById('var-display').textContent =
+    `Symbols: ${symbols.join(', ')}`;
+  setStatus('Variables initialised: ' + symbols.join(', '), 'done');
+}
+
+// ─── Init Constraints ────────────────────────────────────
+function createConstraints() {
+  const m = parseInt(document.getElementById('con-count').value) || 1;
+  const list = document.getElementById('constraints-list');
+  list.innerHTML = '';
+  constraintInputs = [];
+
+  for (let i = 0; i < m; i++) {
+    const row = document.createElement('div');
+    row.className = 'c-row';
+
+    const lbl = document.createElement('span');
+    lbl.className = 'c-label';
+    lbl.textContent = `g${i+1}=`;
+
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.style.fontSize = '0.8rem';
+    inp.placeholder = i === 0 ? 'e.g.  x1 + x2 - 10' : `g${i+1} expression`;
+    inp.style.flex = '1';
+
+    row.appendChild(lbl);
+    row.appendChild(inp);
+    list.appendChild(row);
+    constraintInputs.push(inp);
+  }
+}
+
+// ─── Status helpers ──────────────────────────────────────
+function setStatus(msg, state='idle') {
+  const dot  = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  dot.className  = 'dot' + (state !== 'idle' ? ' ' + state : '');
+  text.textContent = msg;
+}
+
+function writeOutput(html) {
+  const el = document.getElementById('output');
+  el.innerHTML = html;
+}
+
+// ─── SOLVE ───────────────────────────────────────────────
+async function solveProblem() {
+  const objFn   = document.getElementById('obj-fn').value.trim();
+  const constrs = constraintInputs.map(i => i.value.trim()).filter(Boolean);
+
+  if (!objFn) { setStatus('Enter an objective function.', 'error'); return; }
+  if (!numVars) { setStatus('Initialise variables first.', 'error'); return; }
+  if (constrs.length === 0) { setStatus('Add at least one constraint.', 'error'); return; }
+
+  const symbols = Array.from({length: numVars}, (_, i) => `x${i+1}`);
+
+  document.getElementById('solve-btn').disabled = true;
+  setStatus('<span class="spinner"></span> Calling solver…', 'active');
+  document.getElementById('status-text').innerHTML =
+    '<span class="spinner" style="display:inline-block;width:12px;height:12px;border:2px solid #3a6070;border-top-color:#00ffe7;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;"></span> Solving via Claude…';
+
+  writeOutput('// Computing Lagrangian optimisation…');
+
+  const prompt = `
+You are a mathematical solver. Solve the following Lagrangian optimisation problem step by step using symbolic math.
+
+Variables: ${symbols.join(', ')}
+Objective function f: ${objFn}
+Constraints g_i = 0:
+${constrs.map((c,i)=>`  g${i+1}: ${c} = 0`).join('\n')}
+
+Instructions:
+1. Write out the Lagrangian: L = f - Σ λᵢ·gᵢ
+2. Write all partial derivatives ∂L/∂xⱼ = 0 and ∂L/∂λᵢ = 0
+3. Solve the system of equations
+4. State the optimal values x1*, x2*, … and optimal Z* = f(x*)
+5. Verify the solution satisfies the constraints
+
+Format your response as follows (use these exact section headers):
+
+=== LAGRANGIAN ===
+L = ...
+
+=== KKT CONDITIONS ===
+(list all partial derivative equations = 0)
+
+=== SOLUTION ===
+x1* = ...
+x2* = ...
+λ1* = ...
+...
+Z* = ...
+
+=== VERIFICATION ===
+(check each constraint)
+
+=== INTERPRETATION ===
+(brief economic/geometric meaning)
+
+=== PLOT_DATA ===
+Provide JSON on a single line for 3-D plotting:
+{"x_opt": <number>, "y_opt": <number>, "z_opt": <number>, "f_expr": "<javascript math expression using x and y>"}
+Use 'x' for x1 and 'y' for x2 in f_expr. Use ** for powers. If not plottable write {"plottable": false}.
+
+Be precise and concise.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw = data.content.map(b => b.text || '').join('');
+    renderOutput(raw);
+    extractAndPlot(raw, objFn, symbols);
+    setStatus('✓ Optimisation complete.', 'done');
+
+  } catch(err) {
+    writeOutput(`<span class="err">ERROR: ${err.message}</span>`);
+    setStatus('Error — check console.', 'error');
+  } finally {
+    document.getElementById('solve-btn').disabled = false;
+  }
+}
+
+// ─── Render Output ───────────────────────────────────────
+function renderOutput(text) {
+  const sections = [
+    'LAGRANGIAN','KKT CONDITIONS','SOLUTION','VERIFICATION','INTERPRETATION'
+  ];
+
+  let html = '';
+  const lines = text.split('\n');
+  for (const line of lines) {
+    if (line.startsWith('=== PLOT_DATA ===')) break; // hide raw json
+
+    const isSec = sections.some(s => line.includes(s));
+    if (isSec) {
+      html += `<span class="section">${escHtml(line)}</span>\n`;
+    } else if (/^[xλZ]\d?\*?\s*=/.test(line.trim())) {
+      const [k, ...rest] = line.split('=');
+      html += `<span class="key">${escHtml(k)}=</span><span class="val">${escHtml(rest.join('='))}</span>\n`;
+    } else {
+      html += escHtml(line) + '\n';
+    }
+  }
+  document.getElementById('output').innerHTML = html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Extract plot data & render 3-D ──────────────────────
+function extractAndPlot(text, objFn, symbols) {
+  try {
+    const match = text.match(/=== PLOT_DATA ===\s*\n(\{.+?\})/s);
+    if (!match) return;
+
+    const pd = JSON.parse(match[1].trim());
+    if (pd.plottable === false) return;
+
+    const { x_opt, y_opt, z_opt, f_expr } = pd;
+    if (f_expr === undefined) return;
+
+    // Build JS function from expression
+    const fn = new Function('x','y', `
+      const pow = Math.pow;
+      const exp = Math.exp;
+      const log = Math.log;
+      const sin = Math.sin;
+      const cos = Math.cos;
+      const sqrt = Math.sqrt;
+      const abs = Math.abs;
+      try { return ${f_expr.replace(/\*\*/g,'**').replace(/\*\*/g,'pow(').replace(/(\w+)pow\(/g,(m,b)=>`pow(${b},`)}; }
+      catch(e){ return NaN; }
+    `);
+
+    // safer eval
+    const safeF = (x,y) => {
+      try {
+        return Function('x','y',
+          `const **=undefined; return ${f_expr
+            .replace(/\*\*/g,'Math.pow_REPL')
+            .replace(/Math\.pow_REPL\(([^,)]+),([^)]+)\)/g,'Math.pow($1,$2)')
+          };`
+        )(x,y);
+      } catch(e) { return NaN; }
+    };
+
+    // Even simpler: use eval with x,y in scope
+    const evalF = (xv, yv) => {
+      try {
+        const x = xv, y = yv;
+        // replace ** with Math.pow using a regex approach
+        let expr = f_expr.replace(/\*\*/g, '^');
+        // swap ^ back
+        expr = expr.replace(/(\w+\.?\w*)\s*\^\s*(\d+)/g, 'Math.pow($1,$2)');
+        return eval(expr);
+      } catch(e){ return NaN; }
+    };
+
+    const N = 50;
+    const range = 12;
+    const xs = Array.from({length:N},(_,i)=>-range + i*2*range/(N-1));
+    const ys = Array.from({length:N},(_,i)=>-range + i*2*range/(N-1));
+    const zs = ys.map(yv => xs.map(xv => evalF(xv,yv)));
+
+    const container = document.getElementById('plot-container');
+    container.style.display = 'block';
+
+    Plotly.newPlot('plot', [
+      {
+        type: 'surface',
+        x: xs, y: ys, z: zs,
+        colorscale: [
+          [0,'#030a0f'],[0.25,'#0a3040'],[0.5,'#00ffe730'],
+          [0.75,'#00ffe780'],[1,'#00ffe7']
+        ],
+        opacity: 0.82,
+        showscale: false,
+        contours: { z: { show: true, usecolormap: true, highlightcolor:"#00ffe7", project:{z:true} } }
+      },
+      {
+        type: 'scatter3d',
+        x: [x_opt], y: [y_opt], z: [z_opt],
+        mode: 'markers',
+        marker: { size: 8, color: '#ff6b35', symbol: 'circle',
+          line: { color:'#fff', width:2 } },
+        name: 'Optimal'
+      }
+    ], {
+      paper_bgcolor: '#020d14',
+      plot_bgcolor:  '#020d14',
+      scene: {
+        bgcolor: '#020d14',
+        xaxis: { title:'x₁', color:'#3a6070', gridcolor:'#0d3a52', zerolinecolor:'#00ffe744' },
+        yaxis: { title:'x₂', color:'#3a6070', gridcolor:'#0d3a52', zerolinecolor:'#00ffe744' },
+        zaxis: { title:'Z',  color:'#3a6070', gridcolor:'#0d3a52', zerolinecolor:'#00ffe744' }
+      },
+      margin: { l:0,r:0,t:10,b:0 },
+      font: { family:'Space Mono', color:'#3a6070', size:10 }
+    }, { responsive: true, displayModeBar: false });
+
+  } catch(e) {
+    console.warn('Plot error:', e);
+  }
+}
+
+// ─── Initial defaults ─────────────────────────────────────
+createVariables();
+createConstraints();
+</script>
+</body>
+</html>
