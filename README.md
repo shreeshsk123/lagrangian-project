@@ -30,3 +30,6 @@ This project now includes better explanation and structured documentation for ea
 
 ## 💻 Code Enhancement
 Improved program output to clearly represent the steps involved in solving constrained optimization using the Lagrangian method.
+
+## 📐 Mathematical Enhancement
+Improved the representation of the Lagrangian formulation by clearly defining the objective function and constraint, making the mathematical approach easier to understand.
