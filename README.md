@@ -29,7 +29,7 @@ This project helps in understanding how Lagrange multipliers are used in real-wo
 This project now includes better explanation and structured documentation for easier understanding of constrained optimization.
 
 ## 💻 Code 
-Improved program output to clearly represent the steps involved in solving constrained optimization using the Lagrangian method.
+Improved program output to clearly represent the steps involved in solving constrained optimization using the Lagrangian method. 
 
 ## 📐 Mathematical Enhancement
 Improved the representation of the Lagrangian formulation by clearly defining the objective function and constraint, making the mathematical approach easier to understand.
