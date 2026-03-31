@@ -42,3 +42,6 @@ Improved the overall problem-solving flow from input to final solution, making t
 
 ## 🔗 Constraint Handling Enhancement
 Improved how the equality constraint is represented and integrated into the Lagrangian function, making the solving process more consistent and accurate.
+
+## 🎓 Learning Enhancement
+Enhanced the project structure to make it more useful as a learning tool for understanding constrained optimization using Lagrange multipliers.
