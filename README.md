@@ -36,3 +36,6 @@ Improved the representation of the Lagrangian formulation by clearly defining th
 
 ## 🔄 Process 
 Improved the overall problem-solving flow from input to final solution, making the steps of Lagrangian optimization more structured and easy to follow.
+
+## 🔗 Constraint Handling Enhancement
+Improved how the equality constraint is represented and integrated into the Lagrangian function, making the solving process more consistent and accurate.
