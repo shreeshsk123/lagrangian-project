@@ -34,6 +34,9 @@ Improved program output to clearly represent the steps involved in solving const
 ## 📐 Mathematical Enhancement
 Improved the representation of the Lagrangian formulation by clearly defining the objective function and constraint, making the mathematical approach easier to understand.
 
+## 🔍 Variable Interpretation Enhancement
+Enhanced clarity in representing variables and the Lagrange multiplier, making it easier to understand their role in the optimization process.
+
 ## 🔄 Process 
 Improved the overall problem-solving flow from input to final solution, making the steps of Lagrangian optimization more structured and easy to follow.
 
