@@ -24,3 +24,6 @@ The program takes user input, performs symbolic computation, and provides both n
 
 ## 📊 Conclusion
 This project helps in understanding how Lagrange multipliers are used in real-world optimization problems.
+
+## 📈 Enhancement
+This project now includes better explanation and structured documentation for easier understanding of constrained optimization.
